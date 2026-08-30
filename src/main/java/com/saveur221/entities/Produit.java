@@ -1,6 +1,7 @@
 package com.saveur221.entities;
 
 import java.math.BigDecimal;
+import com.saveur221.enums.StatutProduit;
 
 public class Produit {
 
