@@ -1,0 +1,8 @@
+# Copier ce fichier en "config.properties" (même dossier) et adapter les valeurs.
+# config.properties est ignoré par Git (voir .gitignore) pour ne jamais committer
+# d'identifiants réels — les variables d'environnement SAVEUR221_DB_* sont
+# toujours prioritaires si elles sont définies.
+
+db.url=jdbc:postgresql://localhost:5432/saveur221
+db.user=postgres
+db.password=postgres
