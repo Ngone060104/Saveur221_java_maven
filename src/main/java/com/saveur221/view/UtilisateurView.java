@@ -1,4 +1,4 @@
-package main.java.com.saveur221.view;
+package com.saveur221.view;
 
 public class UtilisateurView {
     
