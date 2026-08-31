@@ -1,4 +1,4 @@
-package main.java.com.saveur221.repository;
+package com.saveur221.repository;
 
 public class ClientRepository {
     
