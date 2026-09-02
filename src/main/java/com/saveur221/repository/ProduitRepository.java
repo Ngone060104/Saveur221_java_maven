@@ -105,6 +105,20 @@ public class ProduitRepository {
         }
     }
 
+    /** Utilisé par StockService : modifie uniquement stock + statut. */
+    public void mettreAJourStock(int id, int nouveauStock, StatutProduit nouveauStatut) {
+        String sql = "UPDATE produits SET stock=?, statut=?::statut_produit_enum WHERE id=?";
+        try (Connection cnx = DatabaseConfig.getConnection();
+             PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setInt(1, nouveauStock);
+            ps.setString(2, nouveauStatut.getValeurBdd());
+            ps.setInt(3, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la mise à jour du stock du produit #" + id, e);
+        }
+    }
+
     public void supprimer(int id) {
         String sql = "DELETE FROM produits WHERE id = ?";
         try (Connection cnx = DatabaseConfig.getConnection();
