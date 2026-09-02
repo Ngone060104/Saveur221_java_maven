@@ -2,15 +2,19 @@ package com.saveur221;
 
 import com.saveur221.config.Session;
 import com.saveur221.entities.Categorie;
+import com.saveur221.entities.Commande;
 import com.saveur221.entities.Produit;
 import com.saveur221.entities.Utilisateur;
+import com.saveur221.enums.StatutCommande;
 import com.saveur221.exceptions.AuthentificationException;
 import com.saveur221.exceptions.MetierException;
 import com.saveur221.service.AuthService;
 import com.saveur221.service.CategorieService;
+import com.saveur221.service.CommandeService;
 import com.saveur221.service.ProduitService;
 import com.saveur221.service.StockService;
 import com.saveur221.view.CategorieView;
+import com.saveur221.view.CommandeView;
 import com.saveur221.view.ConsoleUtils;
 import com.saveur221.view.LoginView;
 import com.saveur221.view.ProduitView;
@@ -64,6 +68,8 @@ public class Main {
         ProduitView produitView = new ProduitView();
         StockService stockService = new StockService();
         StockView stockView = new StockView();
+          CommandeService commandeService = new CommandeService();
+        CommandeView commandeView = new CommandeView();
  
         boolean quitter = false;
         while (!quitter) {
@@ -72,6 +78,7 @@ public class Main {
             System.out.println("1. Gérer les catégories");
             System.out.println("2. Gérer les produits");
             System.out.println("3. Gérer le stock");
+            System.out.println("4. Gérer les commandes");
             System.out.println("0. Déconnexion");
             String choix = ConsoleUtils.lireTexte("Votre choix");
  
@@ -79,6 +86,7 @@ public class Main {
                 case "1" -> gererCategories(categorieService, categorieView);
                 case "2" -> gererProduits(produitService, categorieService, produitView);
                 case "3" -> gererStock(stockService, stockView);
+                 case "4" -> gererCommandes(commandeService, commandeView);
                 case "0" -> {
                     Session.deconnecter();
                     ConsoleUtils.succes("Déconnexion réussie.");
@@ -215,4 +223,56 @@ public class Main {
             if (!retour) view.pause();
         }
     }
+
+
+      private static void gererCommandes(CommandeService service, CommandeView view) {
+        boolean retour = false;
+        while (!retour) {
+            String choix = view.afficherMenu();
+            try {
+                switch (choix) {
+                    case "1" -> view.afficherListe(service.lister());
+                    case "2" -> {
+                        StatutCommande statut = view.choisirStatut();
+                        if (statut != null) view.afficherListe(service.filtrerParStatut(statut));
+                        else view.afficherErreur("Statut invalide.");
+                    }
+                    case "3" -> view.afficherListe(service.listerEnCours());
+                    case "4" -> {
+                        int id = view.lireId("Id de la commande");
+                        Commande commande = service.trouverParId(id);
+                        view.afficherDetail(commande);
+                    }
+                    case "5" -> {
+                        int id = view.lireId("Id de la commande");
+                        Commande commande = service.trouverParId(id);
+                        view.afficherStatutActuel(commande.getStatut());
+                        StatutCommande nouveauStatut = view.choisirStatut();
+                        if (nouveauStatut != null) {
+                            service.changerStatut(id, nouveauStatut);
+                            view.afficherSucces("Commande #" + id + " -> " + nouveauStatut);
+                        } else {
+                            view.afficherErreur("Statut invalide.");
+                        }
+                    }
+                    case "6" -> {
+                        int id = view.lireId("Id de la commande à annuler");
+                        Commande commande = service.trouverParId(id);
+                        if (view.demanderConfirmationAnnulation(id, commande.getStatut())) {
+                            service.annuler(id);
+                            view.afficherSucces("Commande annulée. Le stock a été restitué automatiquement.");
+                        } else {
+                            view.afficherMessage("Annulation abandonnée.");
+                        }
+                    }
+                    case "0" -> retour = true;
+                    default -> view.afficherErreur("Choix invalide.");
+                }
+            } catch (MetierException e) {
+                view.afficherErreur(e.getMessage());
+            }
+            if (!retour) view.pause();
+        }
+    }
 }
+
