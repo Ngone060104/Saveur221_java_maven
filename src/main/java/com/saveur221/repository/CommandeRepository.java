@@ -6,7 +6,9 @@ import com.saveur221.entities.Commande;
 import com.saveur221.entities.Role;
 import com.saveur221.enums.StatutCommande;
 
+import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +73,59 @@ public class CommandeRepository {
             throw new RuntimeException("Erreur lors du changement de statut de la commande #" + id, e);
         }
     }
+
+    // --- Statistiques -------------------------------------------------------
+
+    /** Chiffre d'affaires depuis une date donnée, commandes ANNULEE exclues. */
+    public BigDecimal chiffreAffaires(LocalDateTime depuis) {
+        String sql = "SELECT COALESCE(SUM(montant_total), 0) FROM commandes " +
+                     "WHERE date_commande >= ? AND statut <> 'ANNULEE'";
+        try (Connection cnx = DatabaseConfig.getConnection();
+             PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setTimestamp(1, Timestamp.valueOf(depuis));
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getBigDecimal(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du calcul du chiffre d'affaires", e);
+        }
+    }
+
+    public int compterCommandes() {
+        return compter("SELECT COUNT(*) FROM commandes");
+    }
+
+    public int compterCommandesEnCours() {
+        return compter("SELECT COUNT(*) FROM commandes WHERE statut IN ('EN_ATTENTE','EN_PREPARATION','PRETE')");
+    }
+
+    public int compterParStatut(StatutCommande statut) {
+        String sql = "SELECT COUNT(*) FROM commandes WHERE statut = ?::statut_commande_enum";
+        try (Connection cnx = DatabaseConfig.getConnection();
+             PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setString(1, statut.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du comptage des commandes par statut", e);
+        }
+    }
+
+    private int compter(String sql) {
+        try (Connection cnx = DatabaseConfig.getConnection();
+             PreparedStatement ps = cnx.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors d'un comptage de commandes", e);
+        }
+    }
+
+    // --- utilitaires internes -----------------------------------------------
 
     @FunctionalInterface
     private interface Binder {
