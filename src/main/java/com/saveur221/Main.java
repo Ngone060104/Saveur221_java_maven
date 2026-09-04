@@ -15,6 +15,7 @@ import com.saveur221.service.CategorieService;
 import com.saveur221.service.CommandeService;
 import com.saveur221.service.PaiementService;
 import com.saveur221.service.ProduitService;
+import com.saveur221.service.StatistiqueService;
 import com.saveur221.service.StockService;
 import com.saveur221.view.CategorieView;
 import com.saveur221.view.CommandeView;
@@ -22,11 +23,14 @@ import com.saveur221.view.ConsoleUtils;
 import com.saveur221.view.LoginView;
 import com.saveur221.view.PaiementView;
 import com.saveur221.view.ProduitView;
+import com.saveur221.view.StatistiqueView;
 import com.saveur221.view.StockView;
 
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Main {
 
@@ -50,9 +54,11 @@ public class Main {
         loginView.afficherEnTete();
         while (true) {
             String email = loginView.lireEmail();
-            if (email.equalsIgnoreCase("q")) return null;
+            if (email.equalsIgnoreCase("q"))
+                return null;
             String motDePasse = loginView.lireMotDePasse();
-            if (motDePasse.equalsIgnoreCase("q")) return null;
+            if (motDePasse.equalsIgnoreCase("q"))
+                return null;
 
             try {
                 Utilisateur utilisateur = authService.connexion(email, motDePasse);
@@ -76,6 +82,8 @@ public class Main {
         CommandeView commandeView = new CommandeView();
         PaiementService paiementService = new PaiementService();
         PaiementView paiementView = new PaiementView();
+        StatistiqueService statistiqueService = new StatistiqueService();
+        StatistiqueView statistiqueView = new StatistiqueView();
 
         boolean quitter = false;
         while (!quitter) {
@@ -86,6 +94,7 @@ public class Main {
             System.out.println("3. Gérer le stock");
             System.out.println("4. Gérer les commandes");
             System.out.println("5. Gérer les paiements");
+            System.out.println("6. Consulter les statistiques");
             System.out.println("0. Déconnexion");
             String choix = ConsoleUtils.lireTexte("Votre choix");
 
@@ -95,6 +104,7 @@ public class Main {
                 case "3" -> gererStock(stockService, stockView);
                 case "4" -> gererCommandes(commandeService, commandeView);
                 case "5" -> gererPaiements(paiementService, paiementView);
+                case "6" -> afficherStatistiques(statistiqueService, statistiqueView);
                 case "0" -> {
                     Session.deconnecter();
                     ConsoleUtils.succes("Déconnexion réussie.");
@@ -119,7 +129,8 @@ public class Main {
                     case "3" -> {
                         Categorie saisie = view.saisirNouvelleCategorie();
                         Categorie creee = service.ajouter(saisie.getLibelle(), saisie.getDescription());
-                        view.afficherSucces("Catégorie \"" + creee.getLibelle() + "\" créée avec l'id #" + creee.getId());
+                        view.afficherSucces(
+                                "Catégorie \"" + creee.getLibelle() + "\" créée avec l'id #" + creee.getId());
                     }
                     case "4" -> {
                         int id = view.lireId("Id de la catégorie à modifier");
@@ -144,7 +155,8 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour) view.pause();
+            if (!retour)
+                view.pause();
         }
     }
 
@@ -192,7 +204,8 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour) view.pause();
+            if (!retour)
+                view.pause();
         }
     }
 
@@ -223,7 +236,8 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour) view.pause();
+            if (!retour)
+                view.pause();
         }
     }
 
@@ -236,8 +250,10 @@ public class Main {
                     case "1" -> view.afficherListe(service.lister());
                     case "2" -> {
                         StatutCommande statut = view.choisirStatut();
-                        if (statut != null) view.afficherListe(service.filtrerParStatut(statut));
-                        else view.afficherErreur("Statut invalide.");
+                        if (statut != null)
+                            view.afficherListe(service.filtrerParStatut(statut));
+                        else
+                            view.afficherErreur("Statut invalide.");
                     }
                     case "3" -> view.afficherListe(service.listerEnCours());
                     case "4" -> {
@@ -273,7 +289,8 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour) view.pause();
+            if (!retour)
+                view.pause();
         }
     }
 
@@ -299,7 +316,8 @@ public class Main {
                         } else {
                             BigDecimal montant = view.lireMontantRecu();
                             service.enregistrer(commandeId, montant);
-                            view.afficherSucces("Paiement de " + montant + " F enregistré pour la commande #" + commandeId + ".");
+                            view.afficherSucces(
+                                    "Paiement de " + montant + " F enregistré pour la commande #" + commandeId + ".");
                         }
                     }
                     case "0" -> retour = true;
@@ -308,7 +326,29 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour) view.pause();
+            if (!retour)
+                view.pause();
         }
     }
+
+    
+    private static void afficherStatistiques(StatistiqueService service, StatistiqueView view) {
+        Map<StatutCommande, Integer> commandesParStatut = new LinkedHashMap<>();
+        for (StatutCommande s : StatutCommande.values()) {
+            commandesParStatut.put(s, service.compterParStatut(s));
+        }
+ 
+        view.afficherStatistiques(
+                service.chiffreAffairesDuJour(),
+                service.chiffreAffairesDeLaSemaine(),
+                service.chiffreAffairesDuMois(),
+                service.nombreDeCommandes(),
+                service.commandesEnCours(),
+                commandesParStatut,
+                service.produitLePlusVendu(),
+                service.topProduits(3)
+        );
+        view.pause();
+    }
+
 }
