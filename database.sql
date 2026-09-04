@@ -309,3 +309,9 @@ WHERE id = 11;
 UPDATE utilisateurs
 SET mdp = '$2y$10$ObArOfXlJpVRcmujcP5gl.VpSoWHz2hYh8vbrSTRtfpJHYrvcubnK'
 WHERE id = 10;
+
+-- Calcule le max(id) de la table commandes et ajuste le compteur
+SELECT setval('commandes_id_seq', COALESCE((SELECT MAX(id) FROM commandes), 0) + 1, false);
+
+-- Calcule le max(id) de la table lignes_commande et ajuste le compteur
+SELECT setval('lignes_commande_id_seq', COALESCE((SELECT MAX(id) FROM lignes_commande), 0) + 1, false);

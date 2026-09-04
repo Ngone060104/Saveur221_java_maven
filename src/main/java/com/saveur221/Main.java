@@ -17,6 +17,7 @@ import com.saveur221.service.PaiementService;
 import com.saveur221.service.ProduitService;
 import com.saveur221.service.StatistiqueService;
 import com.saveur221.service.StockService;
+import com.saveur221.service.UtilisateurService;
 import com.saveur221.view.CategorieView;
 import com.saveur221.view.CommandeView;
 import com.saveur221.view.ConsoleUtils;
@@ -25,6 +26,7 @@ import com.saveur221.view.PaiementView;
 import com.saveur221.view.ProduitView;
 import com.saveur221.view.StatistiqueView;
 import com.saveur221.view.StockView;
+import com.saveur221.view.UtilisateurView;
 
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -84,6 +86,8 @@ public class Main {
         PaiementView paiementView = new PaiementView();
         StatistiqueService statistiqueService = new StatistiqueService();
         StatistiqueView statistiqueView = new StatistiqueView();
+        UtilisateurService utilisateurService = new UtilisateurService();
+        UtilisateurView utilisateurView = new UtilisateurView();
 
         boolean quitter = false;
         while (!quitter) {
@@ -95,6 +99,9 @@ public class Main {
             System.out.println("4. Gérer les commandes");
             System.out.println("5. Gérer les paiements");
             System.out.println("6. Consulter les statistiques");
+            if (Session.estAdmin()) {
+                System.out.println("7. Gérer les utilisateurs internes (ADMIN)");
+            }
             System.out.println("0. Déconnexion");
             String choix = ConsoleUtils.lireTexte("Votre choix");
 
@@ -105,6 +112,14 @@ public class Main {
                 case "4" -> gererCommandes(commandeService, commandeView);
                 case "5" -> gererPaiements(paiementService, paiementView);
                 case "6" -> afficherStatistiques(statistiqueService, statistiqueView);
+                case "7" -> {
+                    if (Session.estAdmin()) {
+                        gererUtilisateurs(utilisateurService, utilisateurView);
+                    } else {
+                        ConsoleUtils.erreur("Accès réservé à l'administrateur.");
+                        ConsoleUtils.pause();
+                    }
+                }
                 case "0" -> {
                     Session.deconnecter();
                     ConsoleUtils.succes("Déconnexion réussie.");
@@ -331,13 +346,12 @@ public class Main {
         }
     }
 
-    
     private static void afficherStatistiques(StatistiqueService service, StatistiqueView view) {
         Map<StatutCommande, Integer> commandesParStatut = new LinkedHashMap<>();
         for (StatutCommande s : StatutCommande.values()) {
             commandesParStatut.put(s, service.compterParStatut(s));
         }
- 
+
         view.afficherStatistiques(
                 service.chiffreAffairesDuJour(),
                 service.chiffreAffairesDeLaSemaine(),
@@ -346,9 +360,65 @@ public class Main {
                 service.commandesEnCours(),
                 commandesParStatut,
                 service.produitLePlusVendu(),
-                service.topProduits(3)
-        );
+                service.topProduits(3));
         view.pause();
     }
 
+    
+    private static void gererUtilisateurs(UtilisateurService service, UtilisateurView view) {
+        boolean retour = false;
+        while (!retour) {
+            String choix = view.afficherMenu();
+            try {
+                switch (choix) {
+                    case "1" -> view.afficherListe(service.lister());
+                    case "2" -> view.afficherListe(service.rechercher(view.lireMotCleRecherche()));
+                    case "3" -> {
+                        var saisie = view.saisirNouvelUtilisateur();
+                        Utilisateur cree = service.ajouter(saisie.nom(), saisie.prenom(), saisie.email(),
+                                saisie.motDePasse(), saisie.role());
+                        view.afficherSucces("Utilisateur \"" + cree.getNomComplet() + "\" créé avec l'id #" + cree.getId());
+                    }
+                    case "4" -> {
+                        int id = view.lireId("Id de l'utilisateur à modifier");
+                        Utilisateur existant = service.trouverParId(id);
+                        var saisie = view.saisirModificationUtilisateur(existant);
+                        service.modifier(id, saisie.nom(), saisie.prenom(), saisie.email(), saisie.role());
+                        view.afficherSucces("Utilisateur #" + id + " modifié.");
+                    }
+                    case "5" -> {
+                        int id = view.lireId("Id de l'utilisateur");
+                        Utilisateur existant = service.trouverParId(id);
+                        boolean nouveauStatut = !existant.isActif();
+                        String action = nouveauStatut ? "activer" : "désactiver";
+                        if (view.demanderConfirmation("Confirmer : " + action + " le compte de " + existant.getNomComplet() + " ?")) {
+                            service.changerActif(id, nouveauStatut);
+                            view.afficherSucces("Compte " + (nouveauStatut ? "activé." : "désactivé."));
+                        } else {
+                            view.afficherMessage("Action annulée.");
+                        }
+                    }
+                    case "6" -> {
+                        int id = view.lireId("Id de l'utilisateur à supprimer");
+                        if (Session.getUtilisateurConnecte().getId().equals(id)) {
+                            view.afficherErreur("Vous ne pouvez pas supprimer votre propre compte.");
+                        } else {
+                            Utilisateur existant = service.trouverParId(id);
+                            if (view.demanderConfirmation("Confirmer la suppression de \"" + existant.getNomComplet() + "\" ?")) {
+                                service.supprimer(id);
+                                view.afficherSucces("Utilisateur supprimé.");
+                            } else {
+                                view.afficherMessage("Suppression annulée.");
+                            }
+                        }
+                    }
+                    case "0" -> retour = true;
+                    default -> view.afficherErreur("Choix invalide.");
+                }
+            } catch (MetierException e) {
+                view.afficherErreur(e.getMessage());
+            }
+            if (!retour) view.pause();
+        }
+    }
 }
