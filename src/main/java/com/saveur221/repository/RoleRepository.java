@@ -26,4 +26,22 @@ public class RoleRepository {
         }
         return Optional.empty();
     }
+
+     public Optional<Role> trouverParLibelle(String libelle) {
+        String sql = "SELECT id, libelle FROM roles WHERE libelle = ?";
+        try (Connection cnx = DatabaseConfig.getConnection();
+             PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setString(1, libelle);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapper(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la recherche du rôle " + libelle, e);
+        }
+        return Optional.empty();
+    }
+ 
+    private Role mapper(ResultSet rs) throws SQLException {
+        return new Role(rs.getInt("id"), rs.getString("libelle"));
+    }
 }
