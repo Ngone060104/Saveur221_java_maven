@@ -20,10 +20,40 @@ public final class ConsoleUtils {
         do {
             valeur = lireTexte(label);
             if (valeur.isEmpty()) {
-                System.out.println("  ⚠ Ce champ est obligatoire.");
+                System.out.println(" Ce champ est obligatoire.");
             }
         } while (valeur.isEmpty());
         return valeur;
+    }
+
+      /**
+     * NOUVEAUTÉ : Force la saisie d'un texte contenant obligatoirement des lettres.
+     * Idéal pour un nom, un prénom, un libellé ou un nom de produit. Rejette les chiffres seuls (ex: "1").
+     */
+
+       public static String lireAlphabetiqueObligatoire(String label) {
+        while (true) {
+            String valeur = lireTexteObligatoire(label);
+            // Vérifie si la chaîne contient au moins une lettre minuscule ou majuscule (avec accents)
+            if (valeur.matches(".*[a-zA-ZÀ-ÿ].*")) {
+                return valeur;
+            }
+            System.out.println(" Ce champ doit contenir des lettres (pas uniquement des chiffres).");
+        }
+    }
+      /**
+     * NOUVEAUTÉ : Force la saisie d'un email au format valide (ex: contact@saveur221.sn).
+     */
+
+      public static String lireEmailObligatoire(String label) {
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
+        while (true) {
+            String valeur = lireTexteObligatoire(label);
+            if (valeur.matches(emailRegex)) {
+                return valeur;
+            }
+            System.out.println(" Format d'email invalide (ex: nom@domaine.com).");
+        }
     }
 
     public static int lireEntier(String label) {
@@ -32,7 +62,22 @@ public final class ConsoleUtils {
             try {
                 return Integer.parseInt(saisie.trim());
             } catch (NumberFormatException e) {
-                System.out.println("  ⚠ Merci de saisir un nombre entier valide.");
+                System.out.println("   Merci de saisir un nombre entier valide.");
+            }
+        }
+    }
+
+
+     /**
+     * NOUVEAUTÉ : Permet de saisir proprement un nombre décimal (double) de manière sécurisée.
+     */
+    public static double lireDouble(String label) {
+        while (true) {
+            String saisie = lireTexte(label);
+            try {
+                return Double.parseDouble(saisie.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("  ⚠ Merci de saisir un nombre décimal valide (ex: 15.5).");
             }
         }
     }
@@ -62,15 +107,10 @@ public final class ConsoleUtils {
     }
 
     public static void erreur(String message) {
-        System.out.println("  ✗ " + message);
+        System.out.println(message);
     }
 
     public static void succes(String message) {
-        System.out.println("  ✓ " + message);
-    }
-
-    public static void pause() {
-        System.out.print("\nAppuyez sur Entrée pour continuer...");
-        SCANNER.nextLine();
+        System.out.println(message);
     }
 }

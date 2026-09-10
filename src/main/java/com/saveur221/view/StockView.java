@@ -17,19 +17,35 @@ public class StockView {
         System.out.println("4. Voir les produits à stock faible");
         System.out.println("5. Voir les produits en rupture");
         System.out.println("0. Retour au menu principal");
-        return lireTexte("Votre choix");
+        // MODIFICATION : Empêche une validation vide pour le choix du menu
+        return lireTexteObligatoire("Votre choix");
     }
 
     public int lireIdProduit() {
+        // Géré par lireEntier (redemande si vide ou invalide)
         return lireEntier("Id du produit");
     }
 
     public int lireQuantiteAAjouter() {
-        return lireEntier("Quantité à ajouter");
+        // MODIFICATION : Force l'ajout d'une quantité strictement positive (> 0)
+        while (true) {
+            int quantite = lireEntier("Quantité à ajouter");
+            if (quantite > 0) {
+                return quantite;
+            }
+            System.out.println("  ⚠ La quantité à ajouter doit être strictement supérieure à 0.");
+        }
     }
 
     public int lireNouveauSeuil() {
-        return lireEntier("Nouveau seuil d'alerte (produits à ce niveau ou en dessous = stock faible)");
+        // MODIFICATION : Force un seuil d'alerte positif ou nul (>= 0)
+        while (true) {
+            int seuil = lireEntier("Nouveau seuil d'alerte (produits à ce niveau ou en dessous = stock faible)");
+            if (seuil >= 0) {
+                return seuil;
+            }
+            System.out.println("  ⚠ Le seuil d'alerte ne peut pas être négatif.");
+        }
     }
 
     public void afficherListe(List<Produit> produits) {
@@ -46,5 +62,4 @@ public class StockView {
 
     public void afficherSucces(String message) { succes(message); }
     public void afficherErreur(String message) { erreur(message); }
-    public void pause() { ConsoleUtils.pause(); }
 }

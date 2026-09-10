@@ -24,7 +24,8 @@ public class ProduitView {
         System.out.println("6. Modifier un produit");
         System.out.println("7. Supprimer un produit");
         System.out.println("0. Retour au menu principal");
-        return lireTexte("Votre choix");
+        // MODIFICATION : Évite une validation vide pour le choix du menu
+        return lireTexteObligatoire("Votre choix");
     }
 
     public String lireMotCleRecherche() {
@@ -36,7 +37,12 @@ public class ProduitView {
     }
 
     public boolean demanderDisponibles() {
-        return lireTexte("Afficher les produits (d)isponibles ou (i)ndisponibles ?").equalsIgnoreCase("d");
+        while (true) {
+            String reponse = lireTexteObligatoire("Afficher les produits (d)isponibles ou (i)ndisponibles ?");
+            if (reponse.equalsIgnoreCase("d")) return true;
+            if (reponse.equalsIgnoreCase("i")) return false;
+            System.out.println("  ⚠ Choix invalide. Veuillez saisir 'd' ou 'i'.");
+        }
     }
 
     public void afficherCategoriesDisponibles(List<Categorie> categories) {
@@ -48,13 +54,30 @@ public class ProduitView {
 
     public SaisieProduit saisirNouveauProduit(List<Categorie> categories) {
         sousTitre("Ajouter un produit");
-        String nom = lireTexteObligatoire("Nom");
+        // MODIFICATION : Utilisation de lireAlphabetiqueObligatoire pour forcer des lettres dans le nom
+        String nom = lireAlphabetiqueObligatoire("Nom");
         String description = lireTexte("Description (optionnel)");
-        BigDecimal prix = lireMontant("Prix");
-        int stock = lireEntier("Quantité en stock initiale");
+        
+        // MODIFICATION : Force un prix strictement supérieur à 0
+        BigDecimal prix;
+        while (true) {
+            prix = lireMontant("Prix");
+            if (prix.compareTo(BigDecimal.ZERO) > 0) break;
+            System.out.println("  ⚠ Le prix doit être strictement supérieur à 0.");
+        }
+
+        // MODIFICATION : Force un stock positif ou nul (>= 0)
+        int stock;
+        while (true) {
+            stock = lireEntier("Quantité en stock initiale");
+            if (stock >= 0) break;
+            System.out.println("  ⚠ Le stock initial ne peut pas être négatif.");
+        }
+
         String image = lireTexte("Nom du fichier image (optionnel)");
         afficherCategoriesDisponibles(categories);
         int categorieId = lireEntier("Id de la catégorie");
+        
         return new SaisieProduit(nom, description.isBlank() ? null : description, prix, stock,
                 image.isBlank() ? null : image, categorieId);
     }
@@ -62,18 +85,28 @@ public class ProduitView {
     public SaisieProduit saisirModificationProduit(Produit existant, List<Categorie> categories) {
         sousTitre("Modifier un produit");
         System.out.println("Actuel : " + existant);
-        String nom = lireTexteObligatoire("Nouveau nom");
+        // MODIFICATION : Utilisation de lireAlphabetiqueObligatoire pour le nouveau nom
+        String nom = lireAlphabetiqueObligatoire("Nouveau nom");
         String description = lireTexte("Nouvelle description (optionnel)");
-        BigDecimal prix = lireMontant("Nouveau prix");
+        
+        // MODIFICATION : Force un prix strictement supérieur à 0
+        BigDecimal prix;
+        while (true) {
+            prix = lireMontant("Nouveau prix");
+            if (prix.compareTo(BigDecimal.ZERO) > 0) break;
+            System.out.println("  ⚠ Le prix doit être strictement supérieur à 0.");
+        }
+
         String image = lireTexte("Nouveau nom de fichier image (optionnel)");
         afficherCategoriesDisponibles(categories);
         int categorieId = lireEntier("Id de la catégorie");
+        
         return new SaisieProduit(nom, description.isBlank() ? null : description, prix, null,
                 image.isBlank() ? null : image, categorieId);
     }
 
     public boolean demanderConfirmationSuppression(String nom) {
-        return lireTexte("Confirmer la suppression de \"" + nom + "\" ? (o/n)").equalsIgnoreCase("o");
+        return lireTexteObligatoire("Confirmer la suppression de \"" + nom + "\" ? (o/n)").equalsIgnoreCase("o");
     }
 
     public void afficherListe(List<Produit> produits) {
@@ -92,5 +125,4 @@ public class ProduitView {
     public void afficherSucces(String message) { succes(message); }
     public void afficherErreur(String message) { erreur(message); }
     public void afficherMessage(String message) { System.out.println(message); }
-    public void pause() { ConsoleUtils.pause(); }
 }

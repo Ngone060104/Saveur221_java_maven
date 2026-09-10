@@ -103,7 +103,7 @@ public class Main {
                 System.out.println("7. Gérer les utilisateurs internes (ADMIN)");
             }
             System.out.println("0. Déconnexion");
-            String choix = ConsoleUtils.lireTexte("Votre choix");
+            String choix = ConsoleUtils.lireTexteObligatoire("Votre choix");
 
             switch (choix) {
                 case "1" -> gererCategories(categorieService, categorieView);
@@ -117,7 +117,6 @@ public class Main {
                         gererUtilisateurs(utilisateurService, utilisateurView);
                     } else {
                         ConsoleUtils.erreur("Accès réservé à l'administrateur.");
-                        ConsoleUtils.pause();
                     }
                 }
                 case "0" -> {
@@ -127,7 +126,6 @@ public class Main {
                 }
                 default -> {
                     ConsoleUtils.erreur("Choix invalide.");
-                    ConsoleUtils.pause();
                 }
             }
         }
@@ -150,6 +148,13 @@ public class Main {
                     case "4" -> {
                         int id = view.lireId("Id de la catégorie à modifier");
                         Categorie existante = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le crash si la catégorie n'existe pas
+                        if (existante == null) {
+                            view.afficherErreur("Aucune catégorie trouvée avec l'ID #" + id);
+                            break;
+                        }
+                        
                         Categorie maj = view.saisirModificationCategorie(existante);
                         service.modifier(id, maj.getLibelle(), maj.getDescription());
                         view.afficherSucces("Catégorie #" + id + " modifiée.");
@@ -157,6 +162,13 @@ public class Main {
                     case "5" -> {
                         int id = view.lireId("Id de la catégorie à supprimer");
                         Categorie existante = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le crash si la catégorie n'existe pas
+                        if (existante == null) {
+                            view.afficherErreur("Aucune catégorie trouvée avec l'ID #" + id);
+                            break;
+                        }
+                        
                         if (view.demanderConfirmationSuppression(existante.getLibelle())) {
                             service.supprimer(id);
                             view.afficherSucces("Catégorie supprimée.");
@@ -170,10 +182,9 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour)
-                view.pause();
         }
     }
+
 
     private static void gererProduits(ProduitService service, CategorieService categorieService, ProduitView view) {
         boolean retour = false;
@@ -186,11 +197,29 @@ public class Main {
                     case "3" -> {
                         view.afficherCategoriesDisponibles(categorieService.lister());
                         int categorieId = view.lireId("Id de la catégorie");
+                        
+                        // SÉCURISATION : Vérifie si la catégorie ciblée existe avant de filtrer
+                        if (categorieService.trouverParId(categorieId) == null) {
+                            view.afficherErreur("Aucune catégorie trouvée avec l'ID #" + categorieId);
+                            break;
+                        }
                         view.afficherListe(service.filtrerParCategorie(categorieId));
                     }
                     case "4" -> view.afficherListe(service.filtrerParDisponibilite(view.demanderDisponibles()));
                     case "5" -> {
-                        var saisie = view.saisirNouveauProduit(categorieService.lister());
+                        var categories = categorieService.lister();
+                        if (categories.isEmpty()) {
+                            view.afficherErreur("Impossible d'ajouter un produit car il n'existe aucune catégorie.");
+                            break;
+                        }
+                        
+                        var saisie = view.saisirNouveauProduit(categories);
+                        // SÉCURISATION : Vérifie si la catégorie choisie par l'utilisateur existe
+                        if (categorieService.trouverParId(saisie.categorieId()) == null) {
+                            view.afficherErreur("La catégorie #" + saisie.categorieId() + " n'existe pas.");
+                            break;
+                        }
+                        
                         Produit cree = service.ajouter(saisie.nom(), saisie.description(), saisie.prix(),
                                 saisie.stock(), saisie.image(), saisie.categorieId());
                         view.afficherSucces("Produit \"" + cree.getNom() + "\" créé avec l'id #" + cree.getId());
@@ -198,7 +227,20 @@ public class Main {
                     case "6" -> {
                         int id = view.lireId("Id du produit à modifier");
                         Produit existant = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le crash NullPointerException
+                        if (existant == null) {
+                            view.afficherErreur("Aucun produit trouvé avec l'ID #" + id);
+                            break;
+                        }
+                        
                         var saisie = view.saisirModificationProduit(existant, categorieService.lister());
+                        // SÉCURISATION : Vérifie si la nouvelle catégorie choisie existe
+                        if (categorieService.trouverParId(saisie.categorieId()) == null) {
+                            view.afficherErreur("La catégorie #" + saisie.categorieId() + " n'existe pas.");
+                            break;
+                        }
+                        
                         service.modifier(id, saisie.nom(), saisie.description(), saisie.prix(),
                                 saisie.image(), saisie.categorieId());
                         view.afficherSucces("Produit #" + id + " modifié.");
@@ -206,6 +248,13 @@ public class Main {
                     case "7" -> {
                         int id = view.lireId("Id du produit à supprimer");
                         Produit existant = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le crash NullPointerException
+                        if (existant == null) {
+                            view.afficherErreur("Aucun produit trouvé avec l'ID #" + id);
+                            break;
+                        }
+                        
                         if (view.demanderConfirmationSuppression(existant.getNom())) {
                             service.supprimer(id);
                             view.afficherSucces("Produit supprimé.");
@@ -219,10 +268,9 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour)
-                view.pause();
         }
     }
+
 
     private static void gererStock(StockService service, StockView view) {
         boolean retour = false;
@@ -234,7 +282,16 @@ public class Main {
                     case "2" -> {
                         int id = view.lireIdProduit();
                         int quantite = view.lireQuantiteAAjouter();
+                        
+                        // SÉCURISATION : On délègue l'approvisionnement et on s'assure du retour
                         Produit maj = service.approvisionner(id, quantite);
+                        
+                        // Si le service ne lève pas d'exception mais renvoie null si inconnu
+                        if (maj == null) {
+                            view.afficherErreur("Aucun produit trouvé avec l'ID #" + id);
+                            break;
+                        }
+                        
                         view.afficherSucces("Nouveau stock de \"" + maj.getNom() + "\" : " + maj.getStock()
                                 + " (" + maj.getStatut().getValeurBdd() + ")");
                     }
@@ -251,8 +308,6 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour)
-                view.pause();
         }
     }
 
@@ -274,11 +329,24 @@ public class Main {
                     case "4" -> {
                         int id = view.lireId("Id de la commande");
                         Commande commande = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le plantage si la commande n'existe pas
+                        if (commande == null) {
+                            view.afficherErreur("Aucune commande trouvée avec l'ID #" + id);
+                            break;
+                        }
                         view.afficherDetail(commande);
                     }
                     case "5" -> {
                         int id = view.lireId("Id de la commande");
                         Commande commande = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le plantage si la commande n'existe pas
+                        if (commande == null) {
+                            view.afficherErreur("Aucune commande trouvée avec l'ID #" + id);
+                            break;
+                        }
+                        
                         view.afficherStatutActuel(commande.getStatut());
                         StatutCommande nouveauStatut = view.choisirStatut();
                         if (nouveauStatut != null) {
@@ -291,6 +359,13 @@ public class Main {
                     case "6" -> {
                         int id = view.lireId("Id de la commande à annuler");
                         Commande commande = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le plantage si la commande n'existe pas
+                        if (commande == null) {
+                            view.afficherErreur("Aucune commande trouvée avec l'ID #" + id);
+                            break;
+                        }
+                        
                         if (view.demanderConfirmationAnnulation(id, commande.getStatut())) {
                             service.annuler(id);
                             view.afficherSucces("Commande annulée. Le stock a été restitué automatiquement.");
@@ -304,10 +379,9 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour)
-                view.pause();
         }
     }
+
 
     private static void gererPaiements(PaiementService service, PaiementView view) {
         boolean retour = false;
@@ -317,14 +391,28 @@ public class Main {
                 switch (choix) {
                     case "1" -> {
                         int commandeId = view.lireIdCommande();
-                        var paiements = service.listerParCommande(commandeId);
+                        
+                        // SÉCURISATION : Vérifie si les informations de paiement de la commande existent
                         StatutPaiementInfo info = service.getStatutPaiement(commandeId);
+                        if (info == null) {
+                            view.afficherErreur("Aucune commande trouvée avec l'ID #" + commandeId);
+                            break;
+                        }
+                        
+                        var paiements = service.listerParCommande(commandeId);
                         view.afficherPaiementsEtStatut(paiements, info);
                     }
                     case "2" -> view.afficherImpayeesEtPartielles(service.listerCommandesImpayeesOuPartielles());
                     case "3" -> {
                         int commandeId = view.lireIdCommande();
+                        
+                        // SÉCURISATION : Vérifie si les informations de paiement de la commande existent
                         StatutPaiementInfo info = service.getStatutPaiement(commandeId);
+                        if (info == null) {
+                            view.afficherErreur("Aucune commande trouvée avec l'ID #" + commandeId);
+                            break;
+                        }
+                        
                         view.afficherMontantRestant(info.montantRestant);
                         if (view.estDejaSoldee(info.montantRestant)) {
                             view.afficherMessage("Cette commande est déjà totalement payée.");
@@ -341,28 +429,37 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour)
-                view.pause();
-        }
-    }
+        } 
+    } 
+
 
     private static void afficherStatistiques(StatistiqueService service, StatistiqueView view) {
         Map<StatutCommande, Integer> commandesParStatut = new LinkedHashMap<>();
-        for (StatutCommande s : StatutCommande.values()) {
-            commandesParStatut.put(s, service.compterParStatut(s));
-        }
+        
+        try {
+            // OPTIMISATION : On charge les compteurs par statut
+            for (StatutCommande s : StatutCommande.values()) {
+                int nb = service.compterParStatut(s);
+                commandesParStatut.put(s, nb);
+            }
 
-        view.afficherStatistiques(
-                service.chiffreAffairesDuJour(),
-                service.chiffreAffairesDeLaSemaine(),
-                service.chiffreAffairesDuMois(),
-                service.nombreDeCommandes(),
-                service.commandesEnCours(),
-                commandesParStatut,
-                service.produitLePlusVendu(),
-                service.topProduits(3));
-        view.pause();
+            // Affichage sécurisé de l'ensemble des indicateurs de performance
+            view.afficherStatistiques(
+                    service.chiffreAffairesDuJour(),
+                    service.chiffreAffairesDeLaSemaine(),
+                    service.chiffreAffairesDuMois(),
+                    service.nombreDeCommandes(),
+                    service.commandesEnCours(),
+                    commandesParStatut,
+                    service.produitLePlusVendu(),
+                    service.topProduits(3)
+            );
+        } catch (Exception e) {
+            // Sécurité si un calcul de CA ou de top produit échoue en base (Données vides)
+            view.afficherErreur("Impossible de charger le tableau de bord complet : " + e.getMessage());
+        }
     }
+
 
     
     private static void gererUtilisateurs(UtilisateurService service, UtilisateurView view) {
@@ -382,6 +479,13 @@ public class Main {
                     case "4" -> {
                         int id = view.lireId("Id de l'utilisateur à modifier");
                         Utilisateur existant = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le plantage si l'utilisateur n'existe pas
+                        if (existant == null) {
+                            view.afficherErreur("Aucun utilisateur trouvé avec l'ID #" + id);
+                            break;
+                        }
+                        
                         var saisie = view.saisirModificationUtilisateur(existant);
                         service.modifier(id, saisie.nom(), saisie.prenom(), saisie.email(), saisie.role());
                         view.afficherSucces("Utilisateur #" + id + " modifié.");
@@ -389,6 +493,13 @@ public class Main {
                     case "5" -> {
                         int id = view.lireId("Id de l'utilisateur");
                         Utilisateur existant = service.trouverParId(id);
+                        
+                        // SÉCURISATION : Évite le plantage si l'utilisateur n'existe pas
+                        if (existant == null) {
+                            view.afficherErreur("Aucun utilisateur trouvé avec l'ID #" + id);
+                            break;
+                        }
+                        
                         boolean nouveauStatut = !existant.isActif();
                         String action = nouveauStatut ? "activer" : "désactiver";
                         if (view.demanderConfirmation("Confirmer : " + action + " le compte de " + existant.getNomComplet() + " ?")) {
@@ -400,10 +511,18 @@ public class Main {
                     }
                     case "6" -> {
                         int id = view.lireId("Id de l'utilisateur à supprimer");
+                        Utilisateur existant = service.trouverParId(id);
+                        
+                        // SÉCURISATION 1 : Évite le plantage si l'utilisateur n'existe pas
+                        if (existant == null) {
+                            view.afficherErreur("Aucun utilisateur trouvé avec l'ID #" + id);
+                            break;
+                        }
+                        
+                        // SÉCURISATION 2 : Empêche l'auto-suppression après vérification de l'existence
                         if (Session.getUtilisateurConnecte().getId().equals(id)) {
                             view.afficherErreur("Vous ne pouvez pas supprimer votre propre compte.");
                         } else {
-                            Utilisateur existant = service.trouverParId(id);
                             if (view.demanderConfirmation("Confirmer la suppression de \"" + existant.getNomComplet() + "\" ?")) {
                                 service.supprimer(id);
                                 view.afficherSucces("Utilisateur supprimé.");
@@ -418,7 +537,7 @@ public class Main {
             } catch (MetierException e) {
                 view.afficherErreur(e.getMessage());
             }
-            if (!retour) view.pause();
         }
     }
+
 }
