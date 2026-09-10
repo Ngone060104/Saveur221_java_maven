@@ -74,6 +74,6 @@ public class LigneCommande {
 
     @Override
     public String toString() {
-        return String.format("%2d x %-25s = %8s F", quantite, produit.getLibelle(), montantLigne);
+        return String.format("%2d x %-25s = %8s F", quantite, produit.getNom(), montantLigne);
     }
 }

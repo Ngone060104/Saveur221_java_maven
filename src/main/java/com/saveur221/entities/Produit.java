@@ -6,7 +6,7 @@ import com.saveur221.enums.StatutProduit;
 public class Produit {
 
     private Integer id;
-    private String libelle;
+    private String nom;
     private String description;
     private BigDecimal prix;
     private int stock;
@@ -21,10 +21,10 @@ public class Produit {
     public Produit() {
     }
 
-    public Produit(Integer id, String libelle, String description, BigDecimal prix, int stock,
+    public Produit(Integer id, String nom, String description, BigDecimal prix, int stock,
                    String image, StatutProduit statut, Categorie categorie) {
         this.id = id;
-        this.libelle = libelle;
+        this.nom = nom;
         this.description = description;
         this.prix = prix;
         this.stock = stock;
@@ -41,12 +41,12 @@ public class Produit {
         this.id = id;
     }
 
-    public String getLibelle() {
-        return libelle;
+    public String getNom() {
+        return nom;
     }
 
-    public void setLibelle(String libelle) {
-        this.libelle = libelle;
+    public void setNom(String nom) {
+        this.nom = nom;
     }
 
     public String getDescription() {
@@ -111,6 +111,6 @@ public class Produit {
 
     @Override
     public String toString() {
-        return String.format("#%d %-25s %8s F  stock:%-4d %s", id, libelle, prix, stock, statut.getValeurBdd());
+        return String.format("#%d %-25s %8s F  stock:%-4d %s", id, nom, prix, stock, statut.getValeurBdd());
     }
 }

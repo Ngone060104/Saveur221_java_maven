@@ -257,11 +257,11 @@ INSERT INTO utilisateurs (nom, prenom, email, mdp, actif, role_id) VALUES
 -- DONNÉES DE TEST — CLIENTS (reproduisent les diagrammes d'objets)
 -- ============================================================================
 INSERT INTO utilisateurs (id, nom, prenom, email, mdp, actif, role_id) VALUES
-    (10, 'Diagne', 'Ndeye', 'ndeye@email.com', 'motdepasse3', TRUE, 3);
+    (10, 'Diagne', 'Ndeye', 'ndeye@email.com', '$2y$10$ObArOfXlJpVRcmujcP5gl.VpSoWHz2hYh8vbrSTRtfpJHYrvcubnK', TRUE, 3);
 INSERT INTO clients (id, telephone, adresse) VALUES (10, '771001010', 'yoff');
 
 INSERT INTO utilisateurs (id, nom, prenom, email, mdp, actif, role_id) VALUES
-    (11, 'Ndiaye', 'Omar', 'omar@email.com', 'motdepasse4', TRUE, 3);
+    (11, 'Ndiaye', 'Omar', 'omar@email.com', '$2y$10$LkbncjE48aDxux/edbSXt.cRJJ2pqWCt7Rra88O2SKJO4wGVCwqYO', TRUE, 3);
 INSERT INTO clients (id, telephone, adresse) VALUES (11, '771111111', 'parcelle');
 
 SELECT setval(pg_get_serial_sequence('utilisateurs','id'), (SELECT MAX(id) FROM utilisateurs));
