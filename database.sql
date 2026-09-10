@@ -301,17 +301,11 @@ INSERT INTO avis (id, note, commentaire, date_avis, client_id, commande_id) VALU
     (1, 5, 'Service rapide', '2026-08-21', 10, 1);
 SELECT setval(pg_get_serial_sequence('avis','id'), (SELECT MAX(id) FROM avis));
 
+ALTER TABLE utilisateurs
+ADD CONSTRAINT utilisateurs_email_unique UNIQUE (email);
 
-UPDATE utilisateurs
-SET mdp = '$2y$10$LkbncjE48aDxux/edbSXt.cRJJ2pqWCt7Rra88O2SKJO4wGVCwqYO'
-WHERE id = 11;
+ALTER TABLE clients
+ADD CONSTRAINT clients_telephone_unique UNIQUE (telephone);
 
-UPDATE utilisateurs
-SET mdp = '$2y$10$ObArOfXlJpVRcmujcP5gl.VpSoWHz2hYh8vbrSTRtfpJHYrvcubnK'
-WHERE id = 10;
-
--- Calcule le max(id) de la table commandes et ajuste le compteur
-SELECT setval('commandes_id_seq', COALESCE((SELECT MAX(id) FROM commandes), 0) + 1, false);
-
--- Calcule le max(id) de la table lignes_commande et ajuste le compteur
-SELECT setval('lignes_commande_id_seq', COALESCE((SELECT MAX(id) FROM lignes_commande), 0) + 1, false);
+ALTER TABLE produits
+ADD COLUMN IF NOT EXISTS seuil_alerte INTEGER NOT NULL DEFAULT 5;
