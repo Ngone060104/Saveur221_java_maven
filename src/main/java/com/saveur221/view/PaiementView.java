@@ -17,15 +17,24 @@ public class PaiementView {
         System.out.println("2. Voir les commandes impayées / partiellement payées");
         System.out.println("3. Enregistrer un paiement");
         System.out.println("0. Retour au menu principal");
-        return lireTexte("Votre choix");
+        // MODIFICATION : Empêche une validation vide pour le choix du menu
+        return lireTexteObligatoire("Votre choix");
     }
 
     public int lireIdCommande() {
+        // Géré par lireEntier (redemande si vide ou invalide)
         return lireEntier("Id de la commande");
     }
 
     public BigDecimal lireMontantRecu() {
-        return lireMontant("Montant reçu");
+        // MODIFICATION : Boucle pour interdire les montants négatifs ou nuls (0 F)
+        while (true) {
+            BigDecimal montant = lireMontant("Montant reçu");
+            if (montant.compareTo(BigDecimal.ZERO) > 0) {
+                return montant;
+            }
+            System.out.println("  ⚠ Le montant reçu doit être strictement supérieur à 0.");
+        }
     }
 
     public void afficherPaiementsEtStatut(List<Paiement> paiements, StatutPaiementInfo info) {
@@ -64,5 +73,4 @@ public class PaiementView {
     public void afficherSucces(String message) { succes(message); }
     public void afficherErreur(String message) { erreur(message); }
     public void afficherMessage(String message) { System.out.println(message); }
-    public void pause() { ConsoleUtils.pause(); }
 }

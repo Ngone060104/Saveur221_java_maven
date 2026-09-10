@@ -28,18 +28,20 @@ public class CategorieView {
         return lireEntier(label);
     }
 
-    public Categorie saisirNouvelleCategorie() {
+  public Categorie saisirNouvelleCategorie() {
         sousTitre("Ajouter une catégorie");
-        String libelle = lireTexteObligatoire("Libellé");
+        // MODIFICATION : Utilisation de lireAlphabetiqueObligatoire pour forcer la présence de lettres
+        String libelle = lireAlphabetiqueObligatoire("Libellé");
         String description = lireTexte("Description (optionnel)");
         return new Categorie(null, libelle, description.isBlank() ? null : description);
     }
-
-    public Categorie saisirModificationCategorie(Categorie existante) {
+     
+     public Categorie saisirModificationCategorie(Categorie existante) {
         sousTitre("Modifier une catégorie");
         System.out.println("Actuel : " + existante.getLibelle() + " — "
                 + (existante.getDescription() != null ? existante.getDescription() : "(sans description)"));
-        String libelle = lireTexteObligatoire("Nouveau libellé");
+        // MODIFICATION : Utilisation de lireAlphabetiqueObligatoire pour le nouveau libellé
+        String libelle = lireAlphabetiqueObligatoire("Nouveau libellé");
         String description = lireTexte("Nouvelle description (optionnel)");
         return new Categorie(existante.getId(), libelle, description.isBlank() ? null : description);
     }
@@ -71,9 +73,5 @@ public class CategorieView {
 
     public void afficherMessage(String message) {
         System.out.println(message);
-    }
-
-    public void pause() {
-        ConsoleUtils.pause();
     }
 }

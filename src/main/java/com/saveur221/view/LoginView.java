@@ -14,16 +14,30 @@ public class LoginView {
     }
 
     public String lireEmail() {
-        return lireTexte("Email");
+        while (true) {
+            String email = lireTexteObligatoire("Email");
+            
+            // Permet de quitter si l'utilisateur saisit "q" ou "Q"
+            if (email.equalsIgnoreCase("q")) {
+                return email;
+            }
+            
+            // Vérifie la validité du format de l'adresse email
+            String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
+            if (email.matches(emailRegex)) {
+                return email;
+            }
+            System.out.println("  ⚠ Format d'email invalide (ex: nom@domaine.com) ou tapez 'q' pour quitter.");
+        }
     }
 
     public String lireMotDePasse() {
-        return lireTexte("Mot de passe");
+        // MODIFICATION : Utilisation de lireTexteObligatoire pour éviter une saisie vide
+        return lireTexteObligatoire("Mot de passe");
     }
 
     public void afficherBienvenue(Utilisateur utilisateur) {
         succes("Bienvenue, " + utilisateur.getNomComplet() + " (" + utilisateur.getRole() + ")");
-        pause();
     }
 
     public void afficherErreur(String message) {

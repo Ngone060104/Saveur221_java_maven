@@ -21,7 +21,8 @@ public class UtilisateurView {
         System.out.println("5. Activer / désactiver un utilisateur");
         System.out.println("6. Supprimer un utilisateur");
         System.out.println("0. Retour au menu principal");
-        return lireTexte("Votre choix");
+        // MODIFICATION : Évite une validation vide pour le choix du menu
+        return lireTexteObligatoire("Votre choix");
     }
 
     public String lireMotCleRecherche() {
@@ -34,26 +35,64 @@ public class UtilisateurView {
 
     public SaisieUtilisateur saisirNouvelUtilisateur() {
         sousTitre("Ajouter un utilisateur");
-        String nom = lireTexteObligatoire("Nom");
-        String prenom = lireTexteObligatoire("Prénom");
-        String email = lireTexteObligatoire("Email");
-        String motDePasse = lireTexteObligatoire("Mot de passe (min. 6 caractères)");
-        String role = lireTexteObligatoire("Rôle (ADMIN ou GERANT)");
+        
+        // MODIFICATION : Forcer des caractères alphabétiques pour l'identité
+        String nom = lireAlphabetiqueObligatoire("Nom");
+        String prenom = lireAlphabetiqueObligatoire("Prénom");
+        
+        // MODIFICATION : Validation stricte du format email (ex: nom@domaine.com)
+        String email = lireEmailObligatoire("Email");
+        
+        // MODIFICATION : Validation de la contrainte métier sur le mot de passe (min. 6 caractères)
+        String motDePasse;
+        while (true) {
+            motDePasse = lireTexteObligatoire("Mot de passe (min. 6 caractères)");
+            if (motDePasse.length() >= 6) {
+                break;
+            }
+            System.out.println("  ⚠ Le mot de passe doit comporter au moins 6 caractères.");
+        }
+        
+        // MODIFICATION : Force la saisie d'un rôle valide de l'application
+        String role;
+        while (true) {
+            role = lireTexteObligatoire("Rôle (ADMIN ou GERANT)").toUpperCase();
+            if (role.equals("ADMIN") || role.equals("GERANT")) {
+                break;
+            }
+            System.out.println(" Rôle invalide. Seuls 'ADMIN' ou 'GERANT' sont acceptés.");
+        }
+        
         return new SaisieUtilisateur(nom, prenom, email, motDePasse, role);
     }
 
     public SaisieUtilisateur saisirModificationUtilisateur(Utilisateur existant) {
         sousTitre("Modifier un utilisateur");
         System.out.println("Actuel : " + existant);
-        String nom = lireTexteObligatoire("Nouveau nom");
-        String prenom = lireTexteObligatoire("Nouveau prénom");
-        String email = lireTexteObligatoire("Nouvel email");
-        String role = lireTexteObligatoire("Nouveau rôle (ADMIN ou GERANT)");
+        
+        // MODIFICATION : Forcer des caractères alphabétiques
+        String nom = lireAlphabetiqueObligatoire("Nouveau nom");
+        String prenom = lireAlphabetiqueObligatoire("Nouveau prénom");
+        
+        // MODIFICATION : Validation stricte du format de l'email
+        String email = lireEmailObligatoire("Nouvel email");
+        
+        // MODIFICATION : Force la saisie d'un rôle valide de l'application
+        String role;
+        while (true) {
+            role = lireTexteObligatoire("Nouveau rôle (ADMIN ou GERANT)").toUpperCase();
+            if (role.equals("ADMIN") || role.equals("GERANT")) {
+                break;
+            }
+            System.out.println(" Rôle invalide. Seuls 'ADMIN' ou 'GERANT' sont acceptés.");
+        }
+        
         return new SaisieUtilisateur(nom, prenom, email, null, role);
     }
 
     public boolean demanderConfirmation(String message) {
-        return lireTexte(message + " (o/n)").equalsIgnoreCase("o");
+        // MODIFICATION : Utilisation de lireTexteObligatoire pour éviter une confirmation par Entrée brute
+        return lireTexteObligatoire(message + " (o/n)").equalsIgnoreCase("o");
     }
 
     public void afficherListe(List<Utilisateur> utilisateurs) {
@@ -72,5 +111,4 @@ public class UtilisateurView {
     public void afficherSucces(String message) { succes(message); }
     public void afficherErreur(String message) { erreur(message); }
     public void afficherMessage(String message) { System.out.println(message); }
-    public void pause() { ConsoleUtils.pause(); }
 }

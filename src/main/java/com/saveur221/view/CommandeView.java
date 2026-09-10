@@ -20,7 +20,8 @@ public class CommandeView {
         System.out.println("5. Faire avancer le statut d'une commande");
         System.out.println("6. Annuler une commande");
         System.out.println("0. Retour au menu principal");
-        return lireTexte("Votre choix");
+        // MODIFICATION : Force l'utilisateur à faire un choix (ne peut pas être vide)
+        return lireTexteObligatoire("Votre choix");
     }
 
     public int lireId(String label) {
@@ -28,20 +29,30 @@ public class CommandeView {
     }
 
     public StatutCommande choisirStatut() {
-        System.out.println("Statuts : 1.EN_ATTENTE  2.EN_PREPARATION  3.PRETE  4.RETIREE  5.ANNULEE");
-        String choix = lireTexte("Votre choix");
-        return switch (choix) {
-            case "1" -> StatutCommande.EN_ATTENTE;
-            case "2" -> StatutCommande.EN_PREPARATION;
-            case "3" -> StatutCommande.PRETE;
-            case "4" -> StatutCommande.RETIREE;
-            case "5" -> StatutCommande.ANNULEE;
-            default -> null;
-        };
+        // MODIFICATION : Boucle pour forcer la saisie d'un statut valide (non vide et correct)
+        while (true) {
+            System.out.println("Statuts : 1.EN_ATTENTE  2.EN_PREPARATION  3.PRETE  4.RETIREE  5.ANNULEE");
+            String choix = lireTexteObligatoire("Votre choix");
+            
+            StatutCommande statut = switch (choix) {
+                case "1" -> StatutCommande.EN_ATTENTE;
+                case "2" -> StatutCommande.EN_PREPARATION;
+                case "3" -> StatutCommande.PRETE;
+                case "4" -> StatutCommande.RETIREE;
+                case "5" -> StatutCommande.ANNULEE;
+                default -> null;
+            };
+
+            if (statut != null) {
+                return statut;
+            }
+            System.out.println(" Choix invalide. Merci de saisir un chiffre entre 1 et 5.");
+        }
     }
 
     public boolean demanderConfirmationAnnulation(int id, StatutCommande statutActuel) {
-        String reponse = lireTexte(
+        // MODIFICATION : Utilisation de lireTexteObligatoire pour éviter une validation accidentelle par "Entrée" vide
+        String reponse = lireTexteObligatoire(
             "Confirmer l'annulation de la commande #" + id + " (statut actuel : " + statutActuel + ") ? (o/n)");
         return reponse.equalsIgnoreCase("o");
     }
@@ -73,5 +84,4 @@ public class CommandeView {
     public void afficherSucces(String message) { succes(message); }
     public void afficherErreur(String message) { erreur(message); }
     public void afficherMessage(String message) { System.out.println(message); }
-    public void pause() { ConsoleUtils.pause(); }
 }

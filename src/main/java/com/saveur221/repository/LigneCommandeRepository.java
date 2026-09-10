@@ -12,11 +12,12 @@ import java.util.List;
 
 public class LigneCommandeRepository {
 
+    // CORRECTION : Changement de c.nom en c.libelle AS categorie_nom
     private static final String SELECT_BASE =
         "SELECT lc.id, lc.quantite, lc.prix_unitaire, lc.montant_ligne, lc.commande_id, " +
         "       p.id AS produit_id, p.nom AS produit_nom, p.description AS produit_description, " +
         "       p.prix AS produit_prix, p.stock AS produit_stock, p.image AS produit_image, p.statut AS produit_statut, " +
-        "       c.id AS categorie_id, c.nom AS categorie_nom, c.description AS categorie_description " +
+        "       c.id AS categorie_id, c.libelle AS categorie_nom, c.description AS categorie_description " +
         "FROM lignes_commande lc " +
         "JOIN produits p ON p.id = lc.produit_id " +
         "JOIN categories c ON c.id = p.categorie_id ";
